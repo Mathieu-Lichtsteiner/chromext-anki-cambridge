@@ -4,7 +4,7 @@
 # http://www.gnu.org/copyleft/agpl.html
 
 """
-Anki-2 add-on to create notes from Cambridge Dictionary 
+Anki-2 add-on to create notes from Cambridge Dictionary
 
 
 """
@@ -18,4 +18,4 @@ __version__ = "0.0.2"
 
 from . import main
 
-
+from . import ankiconnect_bridge
