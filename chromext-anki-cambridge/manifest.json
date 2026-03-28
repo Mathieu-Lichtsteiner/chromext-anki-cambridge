@@ -1,13 +1,21 @@
 {
   "manifest_version": 3,
   "name": "Cambridge to Anki",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Add Cambridge Dictionary entries directly to Anki through AnkiConnect.",
-  "permissions": ["tabs", "storage"],
+  "permissions": [
+    "tabs",
+    "storage",
+    "declarativeContent"
+  ],
   "host_permissions": [
+    "https://dictionary.cambridge.org/*",
     "http://127.0.0.1:8765/*",
     "http://localhost:8765/*"
   ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "action": {
     "default_title": "Cambridge to Anki",
     "default_popup": "popup.html"
