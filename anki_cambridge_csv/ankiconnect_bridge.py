@@ -33,7 +33,7 @@ def _find_ankiconnect_instance():
         if getattr(ac.__class__, "__name__", "") != "AnkiConnect":
             continue
 
-        if not hasattr(module, "webApi"):
+        if not hasattr(module, "AnkiConnect"):
             continue
 
         return ac
