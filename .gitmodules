@@ -4,3 +4,6 @@
 [submodule "references/anki-connect"]
 	path = references/anki-connect
 	url = https://git.sr.ht/~foosoft/anki-connect
+[submodule "references/ankichrome"]
+	path = references/ankichrome
+	url = https://github.com/awkgh/ankichrome
