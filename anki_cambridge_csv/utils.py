@@ -27,7 +27,7 @@ def fill_note(word_entry, note):
     note['Definition']      = word_entry.word_specific
     note['Pronunciation']   = ""
     if pronunciation_uk:
-        note['Pronunciation'] += word_entry.word_pro_uk + ' ' 
+        note['Pronunciation'] += word_entry.word_pro_uk + ' '
     if pronunciation_us:
         note['Pronunciation'] += word_entry.word_pro_us
     note['Grammar']         = word_entry.word_part_of_speech
@@ -44,8 +44,8 @@ def fill_note(word_entry, note):
             f_entry = get_file_entry(word_entry.word_us_media,note['Word'])
             audio_field = audio_field + '[sound:' + unmunge_to_mediafile(f_entry)+'] '
     except :
-        pass        
-    
+        pass
+
     note['Audio'] = audio_field
     #Fetching picture
     #picture_name = word.get('Picture').split('/')[-1] if word.get('Picture') else ''
@@ -57,13 +57,15 @@ def fill_note(word_entry, note):
     note['Picture'] = picture_field
     return note
 
-def add_word(word, model):
+def add_word(word, model, deck_name=None):
     # TODO: Use picture_name and sound_name to check
     #  if update is needed and don't download media if not
     collection = mw.col
     note = notes.Note(collection, model)
+    if deck_name:
+        note.model()["did"] = collection.decks.id(deck_name)
     note = fill_note(word, note)
-    
+
     # TODO: Rewrite to use is_duplicate()
             #word_value = word.get('wordValue') if word.get('wordValue') else 'NO_WORD_VALUE'
             #dupes = collection.findDupes("en", word_value)
@@ -72,13 +74,13 @@ def add_word(word, model):
             #note_dupes2 = collection.findNotes('en:"%s"' % word_value)
             #note_dupes = note_dupes1 + note_dupes2
     collection.addNote(note)
-   
+
 def add_word_to_collection(word_entry, collection):
 
     model = prepare_model(mw.col, fields, styles.model_css)
     note = notes.Note(collection, model)
     note = fill_note(word_entry, note)
-    
+
     collection.addNote(note)
 
 
@@ -222,7 +224,7 @@ def get_config():
             except:
                 config = None
         return config
-    
+
 def update_config(config):
     #if getattr(getattr(mw, "addonManager", None), "writeConfig", None):
     #    mw.addonManager.writeConfig(get_module_name(), config)
@@ -235,7 +237,7 @@ def update_config(config):
         # TODO: Improve error handling
         #pass
         raise SystemError
-    
+
 def get_config_dict():
     config = {}
     config['cookie'] = ''
@@ -254,7 +256,7 @@ def find_note_with_url_pictures(AddonDialog):
         picture_name = f_note['Word'].split('/')[-1] if f_note['Word'] else ''
         f_entry = get_file_entry(f_picture,picture_name)
         picture_field = '<img src="' + unmunge_to_mediafile(f_entry) + '">'
-        f_note['Picture'] = picture_field 
+        f_note['Picture'] = picture_field
         f_note.flush()
         n =+ 1
         AddonDialog.progress.setValue(n)

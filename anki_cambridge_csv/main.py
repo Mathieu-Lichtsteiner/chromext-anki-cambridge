@@ -21,7 +21,8 @@ def ask_user_for_link():
     r = window.exec()
     downloader = mw.cddownloader
     if r == QDialog.DialogCode.Accepted and downloader.word_data:
-        sd = WordDefDialogue(downloader.word_data, downloader.word)
+        deck_name = window.get_deck_name()
+        sd = WordDefDialogue(downloader.word_data, downloader.word, deck_name=deck_name)
         sd.exec()
         sd = None
 
@@ -39,6 +40,7 @@ def ask_user_for_csv():
     links = csv_dlg.get_links()
     if not links:
         return
+    deck_name = csv_dlg.get_deck_name()
     downloader = mw.cddownloader
     total = len(links)
     for idx, entry in enumerate(links, start=1):
@@ -50,7 +52,7 @@ def ask_user_for_csv():
             downloader.word = entry
         downloader.get_word_defs()
         if downloader.word_data:
-            sd = BatchWordDefDialogue(downloader.word_data, downloader.word, idx, total)
+            sd = BatchWordDefDialogue(downloader.word_data, downloader.word, idx, total, deck_name=deck_name)
             sd.exec()
             if sd.cancelled_all:
                 break

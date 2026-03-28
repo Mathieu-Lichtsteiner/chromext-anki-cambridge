@@ -64,6 +64,21 @@ class LinkDialogue(QDialog):
         self.link_editor.placeholderText = 'Enter your link here'
         layout.addWidget(self.link_editor)
 
+        # Target deck selector
+        deck_layout = QHBoxLayout()
+        deck_label = QLabel('Target deck:')
+        deck_layout.addWidget(deck_label)
+        self.deck_combo = QComboBox()
+        self.deck_combo.setEditable(True)
+        self.deck_combo.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+        deck_names = sorted(mw.col.decks.all_names())
+        self.deck_combo.addItems(deck_names)
+        cambridge_idx = self.deck_combo.findText('Cambridge')
+        if cambridge_idx >= 0:
+            self.deck_combo.setCurrentIndex(cambridge_idx)
+        deck_layout.addWidget(self.deck_combo, 1)
+        layout.addLayout(deck_layout)
+
         dialog_buttons = QDialogButtonBox(self)
         dialog_buttons.addButton(QDialogButtonBox.StandardButton.Cancel)
         dialog_buttons.addButton(QDialogButtonBox.StandardButton.Ok)
@@ -78,12 +93,19 @@ class LinkDialogue(QDialog):
             QMessageBox.warning(mw, 'Link is not provided', 'Please, provide a link for you word or phrase.')
             return
 
+        # Cache deck name before the dialog is destroyed
+        self._cached_deck_name = self.deck_combo.currentText().strip() or 'Cambridge'
+
         downloader = mw.cddownloader
         # downloader.clean_up()
         downloader.user_url = self.user_url
         downloader.get_word_defs()
         self.setResult(QDialog.DialogCode.Accepted)
         self.done(QDialog.DialogCode.Accepted)
+
+    def get_deck_name(self):
+        """Return the cached deck name chosen by the user."""
+        return getattr(self, '_cached_deck_name', 'Cambridge')
 
 
 def select_csv_links():
@@ -135,6 +157,22 @@ class CsvFileDialogue(QDialog):
         file_layout.addWidget(browse_btn)
         layout.addLayout(file_layout)
 
+        # Target deck selector
+        deck_layout = QHBoxLayout()
+        deck_label = QLabel('Target deck:')
+        deck_layout.addWidget(deck_label)
+        self.deck_combo = QComboBox()
+        self.deck_combo.setEditable(True)
+        self.deck_combo.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+        deck_names = sorted(mw.col.decks.all_names())
+        self.deck_combo.addItems(deck_names)
+        # Default to 'Cambridge' if it exists, otherwise first deck
+        cambridge_idx = self.deck_combo.findText('Cambridge')
+        if cambridge_idx >= 0:
+            self.deck_combo.setCurrentIndex(cambridge_idx)
+        deck_layout.addWidget(self.deck_combo, 1)
+        layout.addLayout(deck_layout)
+
         dialog_buttons = QDialogButtonBox(self)
         dialog_buttons.addButton(QDialogButtonBox.StandardButton.Cancel)
         dialog_buttons.addButton(QDialogButtonBox.StandardButton.Ok)
@@ -169,13 +207,17 @@ class CsvFileDialogue(QDialog):
                     links.append(row[0].strip())
         return links
 
+    def get_deck_name(self):
+        """Return the deck name chosen by the user."""
+        return self.deck_combo.currentText().strip() or 'Cambridge'
+
 
 class WordDefDialogue(QDialog):
     """
     A Dialog to let the user choosing defs to be added.
     """
 
-    def __init__(self, word_data, word, l2_meaning=None, wd_entry=None):
+    def __init__(self, word_data, word, l2_meaning=None, wd_entry=None, deck_name=None):
         self.word_data = word_data
         self.word = word
         self.selected_defs = []  # list of selected words (word_entry)
@@ -183,6 +225,7 @@ class WordDefDialogue(QDialog):
         self.l2_def = None
         self.single_word = False
         self.l2_meaning = l2_meaning
+        self.deck_name = deck_name
         self.set_model()
         QDialog.__init__(self)
         self.initUI()
@@ -268,7 +311,7 @@ class WordDefDialogue(QDialog):
         for wd_entry in self.word_data:
             for word_to_save in self.selected_defs:
                 if wd_entry.word_specific == word_to_save:
-                    add_word(wd_entry, self.model)
+                    add_word(wd_entry, self.model, self.deck_name)
         self.accept()
 
     def set_model(self):
@@ -295,7 +338,7 @@ class WordDefDialogue(QDialog):
 
     def save_all(self):
         for wd_entry in self.word_data:
-            add_word(wd_entry, self.model)
+            add_word(wd_entry, self.model, self.deck_name)
         self.done(0)
 
 
@@ -307,11 +350,11 @@ class BatchWordDefDialogue(WordDefDialogue):
 
     CANCEL_ALL = QDialog.DialogCode.Rejected + 1
 
-    def __init__(self, word_data, word, current_index, total_count, l2_meaning=None, wd_entry=None):
+    def __init__(self, word_data, word, current_index, total_count, l2_meaning=None, wd_entry=None, deck_name=None):
         self.current_index = current_index
         self.total_count = total_count
         self.cancelled_all = False
-        super().__init__(word_data, word, l2_meaning, wd_entry)
+        super().__init__(word_data, word, l2_meaning, wd_entry, deck_name)
 
     def initUI(self):
         super().initUI()
