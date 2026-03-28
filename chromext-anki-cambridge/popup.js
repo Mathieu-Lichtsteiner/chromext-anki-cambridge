@@ -5,6 +5,7 @@ const ANKI_ENDPOINTS = [
 const ANKI_VERSION = 5;
 const CUSTOM_ACTION = 'cambridgeAddFromUrl';
 
+const currentWordEl = document.getElementById('currentWord');
 const currentUrlEl = document.getElementById('currentUrl');
 const deckSelectEl = document.getElementById('deckSelect');
 const addButtonEl = document.getElementById('addButton');
@@ -35,9 +36,15 @@ async function getCurrentTabUrl() {
   return tab?.url ?? '';
 }
 
-async function invokeAnkiConnect(action, params = {}) {
-  let lastError = null;
-
+function extractWord(url) {
+  try {
+    const parsed = new URL(url);
+    const segments = parsed.pathname.split('/').filter(Boolean);
+    return segments.length > 0 ? decodeURIComponent(segments[segments.length - 1]) : null;
+  } catch {
+    return null;
+  }
+}
   for (const endpoint of ANKI_ENDPOINTS) {
     try {
       const response = await fetch(endpoint, {
@@ -119,7 +126,10 @@ async function handleAddClick() {
 async function init() {
   try {
     currentUrl = await getCurrentTabUrl();
-    currentUrlEl.textContent = currentUrl || 'No active tab URL found.';
+
+    const word = extractWord(currentUrl);
+    currentWordEl.textContent = word ?? 'Unknown word';
+    currentUrlEl.textContent = currentUrl;
 
     if (!isCambridgeDictionaryUrl(currentUrl)) {
       setStatus('Open a Cambridge Dictionary word page first.', 'error');
