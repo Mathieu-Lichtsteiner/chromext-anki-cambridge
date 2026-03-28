@@ -127,7 +127,11 @@ async function handleAddClick() {
 
     const added = result?.added ?? 0;
     const word = result?.word ? ` for “${result.word}”` : '';
-    setStatus(`Added ${added} card(s)${word}.`, 'success');
+    if (added === 0) {
+      setStatus(`No definitions selected${word}.`, 'info');
+    } else {
+      setStatus(`Added ${added} note(s)${word}.`, 'success');
+    }
   } catch (error) {
     setStatus(error.message, 'error');
   } finally {

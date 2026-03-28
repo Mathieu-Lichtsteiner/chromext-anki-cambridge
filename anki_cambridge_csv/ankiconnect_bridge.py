@@ -10,13 +10,10 @@ import sys
 from urllib.parse import urlparse
 
 from aqt import mw
-from aqt.qt import QTimer
-
-from anki import notes
+from aqt.qt import QTimer, QDialog
 
 from .Cambridge import CDDownloader
-from . import styles
-from .utils import fill_note, fields, prepare_model
+from .gui import WordDefDialogue
 
 CUSTOM_ACTION = "cambridgeAddFromUrl"
 
@@ -50,15 +47,6 @@ def _is_cambridge_dictionary_url(url: str) -> bool:
     )
 
 
-def _add_word_to_deck(word_entry, deck_name: str):
-    collection = mw.col
-    model = prepare_model(collection, fields, styles.model_css)
-    note = notes.Note(collection, model)
-    note.model()["did"] = collection.decks.id(deck_name)
-    fill_note(word_entry, note)
-    collection.addNote(note)
-
-
 def _cambridge_add_from_url_impl(url: str, deckName: str | None = None):
     if not url:
         raise Exception("Missing Cambridge URL.")
@@ -80,10 +68,18 @@ def _cambridge_add_from_url_impl(url: str, deckName: str | None = None):
     if not downloader.word_data:
         raise Exception("No definitions were extracted from the Cambridge page.")
 
-    added = 0
-    for entry in downloader.word_data:
-        _add_word_to_deck(entry, deck_name)
-        added += 1
+    word = downloader.word or downloader.word_data[0].word_title
+
+    # Show the native selection dialog so the user can pick definitions
+    dlg = WordDefDialogue(downloader.word_data, word, deck_name=deck_name)
+
+    # If there was only a single definition, WordDefDialogue auto-adds it
+    if not dlg.single_word:
+        result = dlg.exec()
+        if result != QDialog.DialogCode.Accepted:
+            return {"added": 0, "deckName": deck_name, "word": word, "url": url}
+
+    added = len(dlg.selected_defs)
 
     try:
         mw.reset()
@@ -93,7 +89,7 @@ def _cambridge_add_from_url_impl(url: str, deckName: str | None = None):
     return {
         "added": added,
         "deckName": deck_name,
-        "word": downloader.word or downloader.word_data[0].word_title,
+        "word": word,
         "url": url,
     }
 
