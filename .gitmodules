@@ -1,3 +1,6 @@
 [submodule "references/anki_cambridge"]
 	path = references/anki_cambridge
 	url = https://github.com/am-silex/anki_cambridge
+[submodule "references/anki-connect"]
+	path = references/anki-connect
+	url = https://git.sr.ht/~foosoft/anki-connect
