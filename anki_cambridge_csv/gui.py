@@ -192,6 +192,8 @@ class CsvFileDialogue(QDialog):
         if not self.file_path:
             QMessageBox.warning(self, 'No file selected', 'Please select a CSV file.')
             return
+        # Cache deck name before the dialog is destroyed by WA_DeleteOnClose
+        self._cached_deck_name = self.deck_combo.currentText().strip() or 'Cambridge'
         self.setResult(QDialog.DialogCode.Accepted)
         self.done(QDialog.DialogCode.Accepted)
 
@@ -208,8 +210,8 @@ class CsvFileDialogue(QDialog):
         return links
 
     def get_deck_name(self):
-        """Return the deck name chosen by the user."""
-        return self.deck_combo.currentText().strip() or 'Cambridge'
+        """Return the cached deck name chosen by the user."""
+        return getattr(self, '_cached_deck_name', 'Cambridge')
 
 
 class WordDefDialogue(QDialog):
