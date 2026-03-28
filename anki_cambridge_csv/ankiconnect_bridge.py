@@ -10,7 +10,7 @@ import sys
 from urllib.parse import urlparse
 
 from aqt import mw
-from aqt.qt import QTimer, QDialog
+from aqt.qt import QTimer, QDialog, Qt
 
 from .Cambridge import CDDownloader
 from .gui import WordDefDialogue
@@ -72,6 +72,11 @@ def _cambridge_add_from_url_impl(url: str, deckName: str | None = None):
 
     # Show the native selection dialog so the user can pick definitions
     dlg = WordDefDialogue(downloader.word_data, word, deck_name=deck_name)
+
+    # Ensure the dialog appears on top of all other windows
+    dlg.setWindowFlags(dlg.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
+    dlg.raise_()
+    dlg.activateWindow()
 
     # If there was only a single definition, WordDefDialogue auto-adds it
     if not dlg.single_word:
