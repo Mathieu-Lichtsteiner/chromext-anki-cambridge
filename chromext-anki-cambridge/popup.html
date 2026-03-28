@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cambridge to Anki</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <h1>Cambridge → Anki</h1>
+      <p class="subtitle">Send the current Cambridge word page to Anki.</p>
+    </header>
+
+    <section class="panel">
+      <label class="label" for="currentUrl">Current page</label>
+      <div id="currentUrl" class="url">Loading…</div>
+    </section>
+
+    <section class="panel">
+      <label class="label" for="deckSelect">Target deck</label>
+      <select id="deckSelect" class="select" disabled>
+        <option>Loading decks…</option>
+      </select>
+    </section>
+
+    <button id="addButton" class="button" disabled>Add to Anki</button>
+
+    <section id="status" class="status" aria-live="polite"></section>
+  </main>
+
+  <script src="popup.js"></script>
+</body>
+</html>
