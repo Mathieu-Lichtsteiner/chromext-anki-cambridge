@@ -10,6 +10,7 @@ WORD_DEFS_NAME = 'word_defs_name'
 CAMBRIDGE_MODEL = 'Cambridge Dictionary'
 ADDON_NAME = 'anki_cambridge'
 CREATE_NEW_NOTES_SHORTCUT = "Ctrl+l"
+CREATE_NOTES_FROM_CSV_SHORTCUT = "Ctrl+Shift+l"
 
 # Request constants
 WORDLIST_URL = 'https://dictionary.cambridge.org/plus/wordlist'

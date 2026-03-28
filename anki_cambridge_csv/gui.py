@@ -7,6 +7,7 @@ Anki2 add-on to download card's fields with audio from Cambridge Dictionary
 
 """
 
+import csv
 import queue
 import traceback
 from PyQt6.QtGui import QIcon, QFont
@@ -83,6 +84,90 @@ class LinkDialogue(QDialog):
         downloader.get_word_defs()
         self.setResult(QDialog.DialogCode.Accepted)
         self.done(QDialog.DialogCode.Accepted)
+
+
+def select_csv_links():
+    """Open a file dialog to select a CSV file and return a list of links."""
+    file_path, _ = QFileDialog.getOpenFileName(
+        mw, "Select CSV file with links", "", "CSV Files (*.csv);;All Files (*)"
+    )
+    if not file_path:
+        return []
+    links = []
+    with open(file_path, 'r', encoding='utf-8') as f:
+        reader = csv.reader(f)
+        for row in reader:
+            if row and row[0].strip():
+                links.append(row[0].strip())
+    return links
+
+
+class CsvFileDialogue(QDialog):
+    """
+    A Dialog to let the user select a CSV file containing links.
+    """
+
+    def __init__(self, parent=None):
+        self.file_path = ''
+        QDialog.__init__(self)
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle('Anki – Select CSV file with links')
+        self.setWindowIcon(QIcon(os.path.join(icons_dir, 'cambridge_icon.png')))
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+
+        heading = QLabel('<h4>Select a CSV file containing links</h4>')
+        bold_font = QFont()
+        bold_font.setBold(True)
+        heading.setFont(bold_font)
+        layout.addWidget(heading)
+
+        file_layout = QHBoxLayout()
+        self.file_editor = QLineEdit()
+        self.file_editor.setPlaceholderText('No file selected')
+        self.file_editor.setReadOnly(True)
+        file_layout.addWidget(self.file_editor)
+        browse_btn = QPushButton('Browse…')
+        browse_btn.clicked.connect(self.browse_file)
+        file_layout.addWidget(browse_btn)
+        layout.addLayout(file_layout)
+
+        dialog_buttons = QDialogButtonBox(self)
+        dialog_buttons.addButton(QDialogButtonBox.StandardButton.Cancel)
+        dialog_buttons.addButton(QDialogButtonBox.StandardButton.Ok)
+        dialog_buttons.accepted.connect(self.accept_file)
+        dialog_buttons.rejected.connect(self.reject)
+        layout.addWidget(dialog_buttons)
+
+    def browse_file(self):
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Select CSV file with links", "", "CSV Files (*.csv);;All Files (*)"
+        )
+        if path:
+            self.file_path = path
+            self.file_editor.setText(path)
+
+    def accept_file(self):
+        if not self.file_path:
+            QMessageBox.warning(self, 'No file selected', 'Please select a CSV file.')
+            return
+        self.setResult(QDialog.DialogCode.Accepted)
+        self.done(QDialog.DialogCode.Accepted)
+
+    def get_links(self):
+        """Read the selected CSV and return a list of links."""
+        if not self.file_path:
+            return []
+        links = []
+        with open(self.file_path, 'r', encoding='utf-8') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                if row and row[0].strip():
+                    links.append(row[0].strip())
+        return links
 
 
 class WordDefDialogue(QDialog):
@@ -212,6 +297,34 @@ class WordDefDialogue(QDialog):
         for wd_entry in self.word_data:
             add_word(wd_entry, self.model)
         self.done(0)
+
+
+class BatchWordDefDialogue(WordDefDialogue):
+    """
+    WordDefDialogue variant for batch CSV import.
+    Adds a 'Cancel All' button and shows progress in the title.
+    """
+
+    CANCEL_ALL = QDialog.DialogCode.Rejected + 1
+
+    def __init__(self, word_data, word, current_index, total_count, l2_meaning=None, wd_entry=None):
+        self.current_index = current_index
+        self.total_count = total_count
+        self.cancelled_all = False
+        super().__init__(word_data, word, l2_meaning, wd_entry)
+
+    def initUI(self):
+        super().initUI()
+        self.setWindowTitle(f'{self.word} ({self.current_index}/{self.total_count})')
+        # Insert a Cancel All button into the existing button box
+        button_box = self.findChild(QDialogButtonBox)
+        if button_box:
+            cancel_all_btn = button_box.addButton('Cancel All', QDialogButtonBox.ButtonRole.DestructiveRole)
+            cancel_all_btn.clicked.connect(self.cancel_all)
+
+    def cancel_all(self):
+        self.cancelled_all = True
+        self.reject()
 
 
 class AddonConfigWindow(QDialog):
