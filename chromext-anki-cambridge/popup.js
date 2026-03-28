@@ -12,7 +12,7 @@ const addButtonEl = document.getElementById('addButton');
 const statusEl = document.getElementById('status');
 
 let currentUrl = '';
-let activeEndpoint = ANKI_ENDPOINTS[0];
+let activeEndpoint = null;
 
 function setStatus(message, type = 'info') {
   statusEl.textContent = message;
@@ -45,31 +45,41 @@ function extractWord(url) {
     return null;
   }
 }
+
+async function findEndpoint() {
   for (const endpoint of ANKI_ENDPOINTS) {
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, version: ANKI_VERSION, params })
+        body: JSON.stringify({ action: 'version', version: ANKI_VERSION })
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status} ${response.statusText}`);
+      if (response.ok) {
+        activeEndpoint = endpoint;
+        return;
       }
+    } catch { }
+  }
+  throw new Error('Could not reach AnkiConnect.');
+}
 
-      const body = await response.json();
-      if (body.error) {
-        throw new Error(body.error);
-      }
+async function invokeAnkiConnect(action, params = {}) {
+  const response = await fetch(activeEndpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action, version: ANKI_VERSION, params })
+  });
 
-      activeEndpoint = endpoint;
-      return body.result;
-    } catch (error) {
-      lastError = error;
-    }
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status} ${response.statusText}`);
   }
 
-  throw lastError ?? new Error('Could not reach AnkiConnect.');
+  const body = await response.json();
+  if (body.error) {
+    throw new Error(body.error);
+  }
+
+  return body.result;
 }
 
 function populateDecks(decks, selectedDeck) {
@@ -89,6 +99,8 @@ function populateDecks(decks, selectedDeck) {
 }
 
 async function loadDecks() {
+  await findEndpoint();
+
   const [decks, saved] = await Promise.all([
     invokeAnkiConnect('deckNames'),
     chrome.storage.local.get(['lastDeck'])
@@ -97,7 +109,7 @@ async function loadDecks() {
   const selectedDeck = decks.includes(saved.lastDeck) ? saved.lastDeck : decks[0];
   populateDecks(decks, selectedDeck);
   addButtonEl.disabled = false;
-  setStatus(`Connected to AnkiConnect at ${activeEndpoint}.`, 'info');
+  setStatus(`Connected to AnkiConnect.`, 'info');
 }
 
 async function handleAddClick() {
